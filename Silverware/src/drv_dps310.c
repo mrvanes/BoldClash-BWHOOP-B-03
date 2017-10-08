@@ -19,11 +19,12 @@
 #define DPS310_COEF_SRCE 0x28
 #define DPS310_ID 0x10
 
-float c0 , c1 , c00, c10 , c01, c11 , c20, c21 , c30;
+float c0, c1, c00, c10, c01, c11, c20, c21, c30;
 float press_raw_sc, temp_raw_sc, press_fl;
 
 void dps310_init(void)
 {
+    int press_raw, temp_raw = 0;
     int read[3];
 
     // send reset command
@@ -61,7 +62,7 @@ void dps310_init(void)
     while(!i2c_readreg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG)&B00100000); // T sample ready
 //     int temp_raw = i2c_readregbytes(DPS310_I2C_ADDRESS, DPS310_TMP, 3);
     i2c_readdata(DPS310_I2C_ADDRESS, DPS310_TMP, read, 3);
-    int temp_raw = (read[0]<<16) + (read[1]<<8) + read[2];
+    temp_raw = (read[0]<<16) + (read[1]<<8) + read[2];
     temp_raw<<=8; temp_raw>>=8;
     temp_raw_sc  = (float) temp_raw / 1040384;
     i2c_writereg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG, B00000001); // New P sample
@@ -69,7 +70,7 @@ void dps310_init(void)
         delay(10000);
     while(!i2c_readreg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG)&B00010000); // P sample ready
     i2c_readdata(DPS310_I2C_ADDRESS, DPS310_PSR, read, 3);
-    int press_raw = (read[0]<<16) + (read[1]<<8) + read[2];
+    press_raw = (read[0]<<16) + (read[1]<<8) + read[2];
     press_raw<<=8; press_raw>>=8;
     press_raw_sc  = (float) press_raw / 1040384;
 
@@ -88,7 +89,6 @@ int dps310_check(void)
 float dps310_read_pressure(void)
 {
     int press_raw, temp_raw = 0;
-    float altitude = 0;
     int meas = 0;
     int read[3];
 
@@ -99,19 +99,24 @@ float dps310_read_pressure(void)
     if (meas&B00100000) { // New T samples ready?
         // read out new temp_raw
         i2c_readdata(DPS310_I2C_ADDRESS, DPS310_TMP, read, 3);
-        int temp_raw = (read[0]<<16) + (read[1]<<8) + read[2];
+        temp_raw = (read[0]<<16) + (read[1]<<8) + read[2];
         temp_raw<<=8; temp_raw>>=8;
         temp_raw_sc  = (float) temp_raw / 1040384;
+
         // Request new P sample
         i2c_writereg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG, B00000001);
+
     } else if (meas&B00010000) { // New P samples ready?
-       // read out new press_raw
+
+        // read out new press_raw
         i2c_readdata(DPS310_I2C_ADDRESS, DPS310_PSR, read, 3);
-        int press_raw = (read[0]<<16) + (read[1]<<8) + read[2];
+        press_raw = (read[0]<<16) + (read[1]<<8) + read[2];
         press_raw<<=8; press_raw>>=8;
         press_raw_sc =  (float) press_raw / 1040384;
+
         // Request new T sample
         i2c_writereg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG, B00000010);
+
     } else { // Return old value
         return press_fl;
     }
