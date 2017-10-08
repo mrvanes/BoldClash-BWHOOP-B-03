@@ -20,7 +20,7 @@
 
 // the error codes indicate a failure that prevents normal operation
 // led flash codes - the quad will not fly / bind if flashing a code
-// 2 - low battery at powerup - if enabled by config.h "#define STOP_LOWBATTERY" 
+// 2 - low battery at powerup - if enabled by config.h "#define STOP_LOWBATTERY"
 // 3 - radio chip not found
 // 4 - Gyro not found - maybe i2c speed
 // 5 - clock , intterrupts , systick - this should not come up
@@ -58,7 +58,7 @@
 #define USE_SOFTWARE_I2C
 //#define USE_DUMMY_I2C
 
-// I2C speed: fast = no delays 
+// I2C speed: fast = no delays
 // slow1 = for i2c without pull-up resistors
 // slow2 = i2c failsafe speed
 #define SOFTI2C_SPEED_FAST
@@ -97,7 +97,7 @@
 
 // gyro orientation
 // the expected orientation is with the dot in the front-left corner
-// use this to rotate to the correct orientation 
+// use this to rotate to the correct orientation
 // rotations performed in order
 // note, the motors don't get rotated,
 // so they have to be referenced to the new gyro position
@@ -152,9 +152,16 @@
 //#define RADIO_XN297
 #define RADIO_XN297L
 
+// check for baro sensor
+#define BARO_CHECK
 
+// baro type
+#define USE_BARO_DPS310
 
-// PWM PINS DEFINITIONS 
+// baro I2C address
+#define DPS310_I2C_ADDRESS 0x76
+
+// PWM PINS DEFINITIONS
 // currently pins PA0 to PA3 , PA5 , PA8 to PA11 supported
 
 // pwm driver = brushed motors
@@ -165,10 +172,10 @@
 #define USE_PWM_DRIVER
 //#define USE_ESC_DRIVER
 //#define USE_DSHOT_DRIVER_BETA
-		
+
 // pwm pins disable
 // disable all pwm pins / function
-//#define DISABLE_PWM_PINS
+#define DISABLE_PWM_PINS
 
 // pwm pin initialization
 // enable the pwm pins to be used here ( multiple pins ok)
@@ -277,16 +284,16 @@
 #define RGB_PORT GPIOA
 
 // pin for fpv switch ( turns off at failsafe )
-// GPIO_Pin_13 // SWDAT - GPIO_Pin_14 // SWCLK  
+// GPIO_Pin_13 // SWDAT - GPIO_Pin_14 // SWCLK
 // if programming pin, will not flash after bind
 #define FPV_PIN GPIO_Pin_13
-#define FPV_PORT GPIOA 
+#define FPV_PORT GPIOA
 
 
 // BUZZER pin settings - buzzer active "high"
 // SWDAT and SWCLK pins OK here
-// GPIO_Pin_13 // SWDAT - GPIO_Pin_14 // SWCLK 
-#define BUZZER_PIN       GPIO_Pin_x 
+// GPIO_Pin_13 // SWDAT - GPIO_Pin_14 // SWCLK
+#define BUZZER_PIN       GPIO_Pin_x
 #define BUZZER_PIN_PORT  GPIOA
 // x (micro)seconds after loss of tx or low bat before buzzer starts
-#define BUZZER_DELAY     30e6 
+#define BUZZER_DELAY     30e6

@@ -20,7 +20,7 @@
 // use if your tx has no expo function
 // also comment out DISABLE_EXPO to use
 // 0.00 to 1.00 , 0 = no exp
-// positive = less sensitive near center 
+// positive = less sensitive near center
 #define EXPO_XY 0.3
 #define EXPO_YAW 0.3
 
@@ -77,8 +77,8 @@
 //#define SOFT_LPF_4TH_160HZ
 //#define SOFT_LPF_4TH_250HZ
 //#define SOFT_LPF_1ST_HZ 100
-#define SOFT_LPF_2ST_HZ 100
-//#define SOFT_LPF_NONE
+//#define SOFT_LPF_2ST_HZ 100
+#define SOFT_LPF_NONE
 
 
 
@@ -117,7 +117,10 @@
 
 // improves reception and enables trims if used
 // trims are incompatible with DEVO TX when used
-//#define USE_STOCK_TX
+#define USE_STOCK_TX
+
+// Springloaded centre is zero throttle
+#define USE_STOCK_SPRINGLOADED_TX
 
 // automatically remove center bias ( needs throttle off for 1 second )
 //#define STOCK_TX_AUTOCENTER
@@ -172,8 +175,8 @@
 // select only one
 //#define RX_CG023_PROTOCOL
 //#define RX_H7_PROTOCOL
-//#define RX_BAYANG_PROTOCOL
-#define RX_BAYANG_PROTOCOL_TELEMETRY
+#define RX_BAYANG_PROTOCOL
+//#define RX_BAYANG_PROTOCOL_TELEMETRY
 //#define RX_BAYANG_PROTOCOL_BLE_BEACON
 //#define RX_BAYANG_BLE_APP
 //#define RX_CX10BLUE_PROTOCOL
@@ -195,11 +198,13 @@
 // external buzzer - pins in hardware.h
 //#define BUZZER_ENABLE
 
+// Use BARO sensor - type in hardware.h
+#define ENABLE_BARO
 
 
 // Comment out to disable pid tuning gestures
-#define PID_GESTURE_TUNING
-#define COMBINE_PITCH_ROLL_PID_TUNING
+//#define PID_GESTURE_TUNING
+//#define COMBINE_PITCH_ROLL_PID_TUNING
 
 // flash save method
 // flash_save 1: pids + accel calibration

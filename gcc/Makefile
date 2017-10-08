@@ -22,9 +22,11 @@ INCLUDES = -I$(topdir)/Silverware/src/ \
 	-I$(topdir)/Utilities/ \
 	-I$(topdir)/Libraries/STM32F0xx_StdPeriph_Driver/inc/
 
-OPTIMIZE = -Os
+#OPTIMIZE = -Os
+OPTIMIZE = -g -Os
 
-CFLAGS = $(MCFLAGS)  $(OPTIMIZE)  $(DEFS) -I. -I./ $(INCLUDES)  -Wl,-T,flash.ld,-Map,output.map,--gc-sections  -std=gnu99
+#CFLAGS = $(MCFLAGS)  $(OPTIMIZE)  $(DEFS) -I. -I./ $(INCLUDES)  -Wl,-T,flash.ld,-Map,output.map,--gc-sections  -std=gnu99
+CFLAGS = $(MCFLAGS)  $(OPTIMIZE)  $(DEFS) -I. -I./ $(INCLUDES)  -Wl,-T,flash.ld,-Map,output.map,--gc-sections
 
 AFLAGS = $(MCFLAGS)
 
@@ -51,7 +53,6 @@ $(TARGET): $(EXECUTABLE)
 $(EXECUTABLE): $(SRC) $(STARTUP)
 	$(CC) $(CFLAGS) $^ -lm -o $@
 	arm-none-eabi-size $(EXECUTABLE)
-	
 
 clean:
 	rm -f Startup.lst $(TARGET) $(TARGET).lst $(OBJ) $(AUTOGEN) \
