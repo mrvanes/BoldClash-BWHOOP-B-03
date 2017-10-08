@@ -54,8 +54,8 @@
 // i2c driver to use ( dummy - disables i2c )
 // hardware i2c used PB6 and 7 by default ( can also use PA9 and 10)
 
-//#define USE_HARDWARE_I2C
-#define USE_SOFTWARE_I2C
+#define USE_HARDWARE_I2C
+//#define USE_SOFTWARE_I2C
 //#define USE_DUMMY_I2C
 
 // I2C speed: fast = no delays
@@ -152,8 +152,8 @@
 //#define RADIO_XN297
 #define RADIO_XN297L
 
-// check for baro sensor
-#define DISABLE_BARO_CHECK
+// check for baro sensor, flash 9 times on fail
+//#define DISABLE_BARO_CHECK
 
 // baro type
 #define USE_BARO_DPS310

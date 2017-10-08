@@ -11,11 +11,13 @@ void barometer_init()
 
 int barometer_check()
 {
+#ifndef DISABLE_BARO_CHECK
 #ifdef USE_BARO_DPS310
     return dps310_check();
-#else
-    return 1;
 #endif
+
+#endif
+    return 1;
 }
 
 float read_pressure()

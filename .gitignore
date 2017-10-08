@@ -1,5 +1,6 @@
 output/
 Objects/
+gcc/bwhoop*
 
 *.dep
 *.bak
