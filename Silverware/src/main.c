@@ -167,7 +167,7 @@ int main(void)
 #ifdef ENABLE_BARO
     barometer_init();
 
-    if (dps310_check())
+    if (barometer_check())
     {
 
     }

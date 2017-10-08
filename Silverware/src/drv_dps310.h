@@ -1,5 +1,5 @@
-void dps310_init();
-int dps310_check();
-float dps310_read_pressure();
-void dps310_readcoeffs();
+void dps310_init(void);
+int dps310_check(void);
+float dps310_read_pressure(void);
+void dps310_readcoeffs(void);
 int dps310_readcoeff_number(int num);

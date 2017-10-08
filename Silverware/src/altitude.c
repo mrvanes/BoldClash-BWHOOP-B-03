@@ -3,7 +3,7 @@
 
 float altitude;
 
-void altitude_read()
+void altitude_read(void)
 {
     float pressure;
 

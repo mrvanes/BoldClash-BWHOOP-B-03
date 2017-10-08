@@ -20,7 +20,8 @@
 #define DPS310_COEF_SRCE 0x28
 #define DPS310_ID 0x10
 
-float c0, c1, c00, c10, c01, c11, c20, c21, c30;
+float c0,  c1,  c00,  c10,   c01,  c11, c20,  c21, c30;
+//    199  -259 79830 -51103 -2647 1325 -7843 -102 -788
 float press_raw_sc, temp_raw_sc, press_fl;
 
 void dps310_init(void)
@@ -34,12 +35,12 @@ void dps310_init(void)
     // blocking - wait for registers
     do
         delay(10000);
-    while (!(i2c_readreg(DPS310_I2C_ADDRESS , DPS310_MEAS_CFG)&B11000000));
+    while (!(i2c_readreg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG)&B11000000));
 
     // Wait for coefficients to be ready
     do
         delay(10000);
-    while (!i2c_readreg( DPS310_I2C_ADDRESS , DPS310_MEAS_CFG )&B10000000);
+    while (!(i2c_readreg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG)&B10000000));
 
     dps310_readcoeffs();
 

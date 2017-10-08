@@ -2,14 +2,14 @@
 #include "barometer.h"
 #include "drv_dps310.h"
 
-void barometer_init()
+void barometer_init(void)
 {
 #ifdef USE_BARO_DPS310
     dps310_init();
 #endif
 }
 
-int barometer_check()
+int barometer_check(void)
 {
 #ifndef DISABLE_BARO_CHECK
 #ifdef USE_BARO_DPS310
@@ -20,7 +20,7 @@ int barometer_check()
     return 1;
 }
 
-float read_pressure()
+float read_pressure(void)
 {
     float pressure;
 

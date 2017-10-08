@@ -1,3 +1,3 @@
-void barometer_init();
-int barometer_check();
-float read_pressure();
+void barometer_init(void);
+int barometer_check(void);
+float read_pressure(void);

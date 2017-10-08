@@ -1,3 +1,3 @@
 #include "barometer.h"
 
-void altitude_read();
+void altitude_read(void);
