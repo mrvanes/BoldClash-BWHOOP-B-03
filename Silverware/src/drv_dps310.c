@@ -2,6 +2,7 @@
 // #include "drv_softi2c.h"
 #include "drv_i2c.h"
 #include "drv_time.h"
+#include "config.h"
 #include "hardware.h"
 #include "binary.h"
 
@@ -81,9 +82,13 @@ void dps310_init(void)
 
 int dps310_check(void)
 {
+#ifndef DISABLE_BARO_CHECK
     // Get product ID
     int id = i2c_readreg(DPS310_I2C_ADDRESS, DPS310_PRDID);
     return (DPS310_ID==id);
+#else
+    return 1;
+#endif
 }
 
 float dps310_read_pressure(void)

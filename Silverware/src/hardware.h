@@ -153,7 +153,7 @@
 #define RADIO_XN297L
 
 // check for baro sensor
-#define BARO_CHECK
+#define DISABLE_BARO_CHECK
 
 // baro type
 #define USE_BARO_DPS310
@@ -175,7 +175,7 @@
 
 // pwm pins disable
 // disable all pwm pins / function
-#define DISABLE_PWM_PINS
+//#define DISABLE_PWM_PINS
 
 // pwm pin initialization
 // enable the pwm pins to be used here ( multiple pins ok)

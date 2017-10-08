@@ -123,7 +123,7 @@
 #define USE_STOCK_SPRINGLOADED_TX
 
 // automatically remove center bias ( needs throttle off for 1 second )
-//#define STOCK_TX_AUTOCENTER
+#define STOCK_TX_AUTOCENTER
 
 // enable motor filter - select one
 // motorfilter1: hanning 3 sample fir filter
@@ -153,14 +153,14 @@
 //#define THROTTLE_TRANSIENT_COMPENSATION
 
 //throttle feedback from accelerometer
-//#define THROTTLE_SMOOTH
+#define THROTTLE_SMOOTH
 
 // lost quad beeps using motors (30 sec timeout)
 //#define MOTOR_BEEPS
 
 // throttle angle compensation in level mode
 // comment out to disable
-//#define AUTO_THROTTLE
+#define AUTO_THROTTLE
 
 // enable auto lower throttle near max throttle to keep control
 // mix3 works better with brushless

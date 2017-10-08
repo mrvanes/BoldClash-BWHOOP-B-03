@@ -167,7 +167,6 @@ int main(void)
 #ifdef ENABLE_BARO
     barometer_init();
 
-#ifdef BARO_CHECK
     if (barometer_check())
     {
 
@@ -177,7 +176,6 @@ int main(void)
         //barometer not found
         failloop(9);
     }
-#endif
 #endif
 
     adc_init();
