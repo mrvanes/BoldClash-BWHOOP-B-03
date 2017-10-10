@@ -169,7 +169,6 @@ int main(void)
 
     if (barometer_check())
     {
-
     }
     else
     {
@@ -216,6 +215,9 @@ int main(void)
 
 
     gyro_cal();
+#ifdef ENABLE_BARO
+    altidude_cal();
+#endif
 
     extern void rgb_init( void);
     rgb_init();

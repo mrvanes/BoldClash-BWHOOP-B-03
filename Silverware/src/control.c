@@ -156,6 +156,7 @@ float rate_multiplier = 1.0;
                 {
                     gyro_cal();	// for flashing lights
                     acc_cal();
+                    altidude_cal();
                 }
                 else
                 {

@@ -22,8 +22,8 @@ INCLUDES = -I$(topdir)/Silverware/src/ \
 	-I$(topdir)/Utilities/ \
 	-I$(topdir)/Libraries/STM32F0xx_StdPeriph_Driver/inc/
 
-OPTIMIZE = -Os
-#OPTIMIZE = -g -O0
+#OPTIMIZE = -Os
+OPTIMIZE = -g -O0
 
 #CFLAGS = $(MCFLAGS)  $(OPTIMIZE)  $(DEFS) -I. -I./ $(INCLUDES)  -Wl,-T,flash.ld,-Map,output.map,--gc-sections  -std=gnu99
 CFLAGS = $(MCFLAGS)  $(OPTIMIZE)  $(DEFS) -I. -I./ $(INCLUDES)  -Wl,-T,flash.ld,-Map,output.map,--gc-sections
