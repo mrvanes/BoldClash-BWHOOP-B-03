@@ -61,7 +61,7 @@
 // I2C speed: fast = no delays
 // slow1 = for i2c without pull-up resistors
 // slow2 = i2c failsafe speed
-#define SOFTI2C_SPEED_FAST
+//#define SOFTI2C_SPEED_FAST
 //#define SOFTI2C_SPEED_SLOW1
 //#define SOFTI2C_SPEED_SLOW2
 
@@ -175,7 +175,7 @@
 
 // pwm pins disable
 // disable all pwm pins / function
-#define DISABLE_PWM_PINS
+// #define DISABLE_PWM_PINS
 
 // pwm pin initialization
 // enable the pwm pins to be used here ( multiple pins ok)

@@ -156,7 +156,7 @@ float rate_multiplier = 1.0;
                 {
                     gyro_cal();	// for flashing lights
                     acc_cal();
-                    altidude_cal();
+                    altitude_cal();
                 }
                 else
                 {
@@ -224,45 +224,65 @@ float rate_multiplier = 1.0;
 		#endif
 	}
 
+    pid_precalc();
 
-pid_precalc();
+    // flight control
+    if (aux[LEVELMODE]&&!acro_override)
+        {  // level mode
+            // level calculations done after to reduce latency in acro mode
 
+        }
+    else
+        { // rate mode
 
-	// flight control
-	if (aux[LEVELMODE]&&!acro_override)
-	  {	   // level mode
-           // level calculations done after to reduce latency in acro mode
+            error[0] = rxcopy[0] * (float) MAX_RATE * DEGTORAD  - gyro[0];
+            error[1] = rxcopy[1] * (float) MAX_RATE * DEGTORAD  - gyro[1];
 
-	  }
-	else
-	  {	// rate mode
+            error[2] = rxcopy[2] * (float) MAX_RATEYAW * DEGTORAD  - gyro[2];
 
-		  error[0] = rxcopy[0] * (float) MAX_RATE * DEGTORAD  - gyro[0];
-		  error[1] = rxcopy[1] * (float) MAX_RATE * DEGTORAD  - gyro[1];
+        }
 
-          error[2] = rxcopy[2] * (float) MAX_RATEYAW * DEGTORAD  - gyro[2];
+    pid(0);
+    pid(1);
+    pid(2);
 
-	  }
+    float throttle = 0;
 
+// In Baro mode, rx[3] is a measure for desired vertical velocity
+// which should be translated to throttle before anything else.
 
-	pid(0);
-	pid(1);
-	pid(2);
+#ifdef ENABLE_BARO
+    extern int rxmode;
+    int rx_good = 0;
 
-
-float	throttle;
+    if (aux[LEVELMODE] && rxmode == RXMODE_NORMAL)
+    {
+        int rx_good = (rx_good || !(rx[0]==0 && rx[1]==0 && rx[2]==0 && rx[3]==0));
+        if (rx_good)
+        {
+            throttle = altitude_hold();
+//             set_hover_throttle();
+        }
+    }
+#else
 
 // map throttle so under 10% it is zero
 #ifndef USE_STOCK_SPRINGLOADED_TX
-    if ( rx[3] < 0.1f ) throttle = 0;
+    if ( rx[3] < 0.1f ) throttle = 0;           // apply deadband
     else throttle = (rx[3] - 0.1f)*1.11111111f;
 #else
-    float   tx_throttle;
-    tx_throttle = fabs(rx[3] - 0.5f);
-    if ( tx_throttle < 0.05f ) throttle = 0;
-    else throttle = (tx_throttle - 0.05f)*2.222222f;
+    float   spring_throttle;
+//     int no_rx = (rx[0] == 0 && rx[1]== 0 && rx[2] == 0 && rx[3] == 0 && rx[4] == 0);
+    spring_throttle = rx[3] - 0.5f;       // centre stick
+    if (spring_throttle < 0.05f)  // apply deadband and don't use negative throttle travel
+    {
+        throttle = 0;
+    } else
+    {
+        throttle = (spring_throttle - 0.05f)*2.222222f;
+    }
 #endif
-
+#endif
 
 // turn motors off if throttle is off and pitch / roll sticks are centered
 	if ( failsafe || (throttle < 0.001f && (!ENABLESTIX || !onground_long || aux[LEVELMODE] || (fabsf(rx[ROLL]) < (float) ENABLESTIX_TRESHOLD && fabsf(rx[PITCH]) < (float) ENABLESTIX_TRESHOLD && fabsf(rx[YAW]) < (float) ENABLESTIX_TRESHOLD ) ) ) )
@@ -345,26 +365,26 @@ extern float throttlehpf( float in );
 	}
 
 
-		  // throttle angle compensation
+// throttle angle compensation
 #ifdef AUTO_THROTTLE
-		  if (aux[LEVELMODE])
-		    {
-			    //float autothrottle = fastcos(attitude[0] * DEGTORAD) * fastcos(attitude[1] * DEGTORAD);
-			    extern float GEstG[];
-				float autothrottle = GEstG[2];
-				float old_throttle = throttle;
-			    if (autothrottle <= 0.5f)
-				    autothrottle = 0.5f;
-			    throttle = throttle / autothrottle;
-			    // limit to 90%
-			    if (old_throttle < 0.9f)
-				    if (throttle > 0.9f)
-					    throttle = 0.9f;
+    if (aux[LEVELMODE])
+    {
+        //float autothrottle = fastcos(attitude[0] * DEGTORAD) * fastcos(attitude[1] * DEGTORAD);
+        extern float GEstG[];
+        float autothrottle = GEstG[2];
+        float old_throttle = throttle;
+        if (autothrottle <= 0.5f)
+            autothrottle = 0.5f;
+        throttle = throttle / autothrottle;
+        // limit to 90%
+        if (old_throttle < 0.9f)
+            if (throttle > 0.9f)
+                throttle = 0.9f;
 
-			    if (throttle > 1.0f)
-				    throttle = 1.0f;
+        if (throttle > 1.0f)
+            throttle = 1.0f;
 
-		    }
+    }
 #endif
 
 
@@ -382,7 +402,7 @@ static float accel_integral_bias;
 static float accel_integral_filt;
 static float g2_filt = 0.0;
 
-extern float looptime;
+// extern float looptime;
 extern float GEstG[3];
 extern float accelz;
 extern float accel[3];
@@ -423,6 +443,7 @@ const float thr_gain = 1.0;
 throttle += (float) THROTTLE_SMOOTH_FACTOR * thr_gain * accel_integral_filt;
 }
 #endif
+
 
 
 #ifdef LVC_LOWER_THROTTLE
@@ -743,7 +764,7 @@ thrsum = 0;
     }
 
 
-}
+}  // control()
 
 
 #ifndef MOTOR_FILTER2_ALPHA

@@ -22,11 +22,12 @@ int barometer_check(void)
 
 float read_pressure(void)
 {
-    float pressure;
+//     float pressure;
 
 #ifdef USE_BARO_DPS310
-    pressure = dps310_read_pressure();
-    return pressure;
+    dps310_read_pressure();
+    dps310_pcomp_lpf();
+//     dps310_tcomp_lpf(); we don't need tcomp for altitude
 #else
     return 0;
 #endif

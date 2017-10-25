@@ -216,7 +216,7 @@ int main(void)
 
     gyro_cal();
 #ifdef ENABLE_BARO
-    altidude_cal();
+    altitude_cal();
 #endif
 
     extern void rgb_init( void);
@@ -268,7 +268,7 @@ int main(void)
         unsigned long time = gettime();
         looptime = ((uint32_t)( time - lastlooptime));
         if ( looptime <= 0 ) looptime = 1;
-        looptime = looptime * 1e-6f;
+        looptime = looptime * 1e-6f; // looptime in seconds
         if ( looptime > 0.02f ) // max loop 20ms
         {
             failloop( 6);
@@ -295,12 +295,13 @@ int main(void)
         altitude_read();
 #endif
 
-        // all flight calculations and motors
-        control();
-
         // attitude calculations for level mode
         extern void imu_calc(void);
         imu_calc();
+
+        // all flight calculations and motors
+        control();
+
 
 // battery low logic
 

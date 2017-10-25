@@ -47,13 +47,13 @@ THE SOFTWARE.
 
 
 // Kp	                  ROLL       PITCH     YAW
-float pidkp[PIDNUMBER] = { 13.0e-2 , 13.0e-2  , 6e-1 }; 
+float pidkp[PIDNUMBER] = { 13.0e-2 , 13.0e-2  , 6e-1 };
 
 // Ki		              ROLL       PITCH     YAW
-float pidki[PIDNUMBER] = { 8.8e-1  , 8.8e-1 , 3e-1 };	
+float pidki[PIDNUMBER] = { 8.8e-1  , 8.8e-1 , 3e-1 };
 
 // Kd			          ROLL       PITCH     YAW
-float pidkd[PIDNUMBER] = { 5.5e-1 , 5.5e-1  , 0.0e-1 };	
+float pidkd[PIDNUMBER] = { 5.5e-1 , 5.5e-1  , 0.0e-1 };
 
 // "setpoint weighting" 0.0 - 1.0 where 1.0 = normal pid
 // #define ENABLE_SETPOINT_WEIGHTING
@@ -62,7 +62,7 @@ float b[3] = { 1.0 , 1.0 , 1.0};
 
 
 
-// output limit			
+// output limit
 const float outlimit[PIDNUMBER] = { 0.8 , 0.8 , 0.5 };
 
 // limit of integral term (abs)
@@ -79,7 +79,7 @@ int current_pid_axis = 0;
 int current_pid_term = 0;
 float * current_pid_term_pointer = pidkp;
 
-float ierror[PIDNUMBER] = { 0 , 0 , 0};	
+float ierror[PIDNUMBER] = { 0 , 0 , 0};
 
 float pidoutput[PIDNUMBER];
 
@@ -90,7 +90,7 @@ extern float looptime;
 extern float gyro[3];
 extern int onground;
 
-extern float looptime;
+// extern float looptime;
 
 
 #ifdef NORMAL_DTERM
@@ -127,7 +127,7 @@ void pid_precalc()
 int next_pid_term()
 {
 //	current_pid_axis = 0;
-	
+
 	switch (current_pid_term)
 	{
 		case 0:
@@ -143,7 +143,7 @@ int next_pid_term()
 			current_pid_term = 0;
 			break;
 	}
-	
+
 	return current_pid_term + 1;
 }
 
@@ -169,7 +169,7 @@ int next_pid_axis()
 		current_pid_axis++;
 		#endif
 	}
-	
+
 	return current_pid_axis + 1;
 }
 
@@ -183,7 +183,7 @@ int change_pid_value(int increase)
 		number_of_increments[current_pid_term][current_pid_axis]++;
 		#ifdef COMBINE_PITCH_ROLL_PID_TUNING
 		//if (current_pid_axis == 0) {
-		//	number_of_increments[current_pid_term][current_pid_axis+1]++;	
+		//	number_of_increments[current_pid_term][current_pid_axis+1]++;
 		//}
 		#endif
 	}
@@ -191,7 +191,7 @@ int change_pid_value(int increase)
 		number_of_increments[current_pid_term][current_pid_axis]--;
 		#ifdef COMBINE_PITCH_ROLL_PID_TUNING
 		//if (current_pid_axis == 0) {
-		//	number_of_increments[current_pid_term][current_pid_axis+1]--;	
+		//	number_of_increments[current_pid_term][current_pid_axis+1]--;
 		//}
 		#endif
 	}
@@ -201,7 +201,7 @@ int change_pid_value(int increase)
 		current_pid_term_pointer[current_pid_axis+1] = current_pid_term_pointer[current_pid_axis+1] * multiplier;
 	}
 	#endif
-	
+
 	return abs(number_of_increments[current_pid_term][current_pid_axis]);
 }
 
@@ -221,22 +221,22 @@ int decrease_pid()
 }
 
 float pid(int x )
-{ 
+{
 
-        if (onground) 
+        if (onground)
 				{
                 ierror[x] *= 0.98f;
 				}
-	
+
 				int iwindup = 0;
 				if (( pidoutput[x] == outlimit[x] )&& ( error[x] > 0) )
 				{
-					iwindup = 1;		
+					iwindup = 1;
 				}
 				if (( pidoutput[x] == -outlimit[x])&& ( error[x] < 0) )
 				{
-					iwindup = 1;				
-				}              
+					iwindup = 1;
+				}
                 #ifdef ANTI_WINDUP_DISABLE
                 iwindup = 0;
                 #endif
@@ -247,38 +247,38 @@ float pid(int x )
          ierror[x] = ierror[x] + (error[x] + lasterror[x]) * 0.5f *  pidki[x] * looptime;
 				 lasterror[x] = error[x];
 				#endif
-					
+
 				#ifdef RECTANGULAR_RULE_INTEGRAL
 				 ierror[x] = ierror[x] + error[x] *  pidki[x] * looptime;
-				 lasterror[x] = error[x];					
+				 lasterror[x] = error[x];
 				#endif
-					
+
 				#ifdef SIMPSON_RULE_INTEGRAL
 					// assuming similar time intervals
-				 ierror[x] = ierror[x] + 0.166666f* (lasterror2[x] + 4*lasterror[x] + error[x]) *  pidki[x] * looptime;	
+				 ierror[x] = ierror[x] + 0.166666f* (lasterror2[x] + 4*lasterror[x] + error[x]) *  pidki[x] * looptime;
 					lasterror2[x] = lasterror[x];
 					lasterror[x] = error[x];
 					#endif
-					
+
 				}
-				
+
 				limitf( &ierror[x] , integrallimit[x] );
-				
-				
+
+
                 #ifdef ENABLE_SETPOINT_WEIGHTING
 				// P term
-                pidoutput[x] = error[x] * ( b[x])* pidkp[x];				
+                pidoutput[x] = error[x] * ( b[x])* pidkp[x];
 				// b
                 pidoutput[x] +=  - ( 1.0f - b[x])* pidkp[x] * gyro[x];
 				#else
                 // P term with b disabled
                 pidoutput[x] = error[x] * pidkp[x];
                 #endif
-				
-				// I term	
+
+				// I term
 				pidoutput[x] += ierror[x];
-			
-				// D term		  
+
+				// D term
 
 				#ifdef NORMAL_DTERM
 					pidoutput[x] = pidoutput[x] - (gyro[x] - lastrate[x]) * pidkd[x] * timefactor  ;
@@ -286,28 +286,28 @@ float pid(int x )
 				#endif
 
                 #ifdef NEW_DTERM
-                    pidoutput[x] = pidoutput[x] - ( ( 0.5f) *gyro[x] 
+                    pidoutput[x] = pidoutput[x] - ( ( 0.5f) *gyro[x]
                                 - (0.5f) * lastratexx[x][1] ) * pidkd[x] * timefactor  ;
-                                    
+
                     lastratexx[x][1] = lastratexx[x][0];
                     lastratexx[x][0] = gyro[x];
                #endif
-			
-               #ifdef MAX_FLAT_LPF_DIFF_DTERM 
+
+               #ifdef MAX_FLAT_LPF_DIFF_DTERM
 					pidoutput[x] = pidoutput[x] - ( + 0.125f *gyro[x] + 0.250f * lastratexx[x][0]
 								- 0.250f * lastratexx[x][2] - ( 0.125f) * lastratexx[x][3]) * pidkd[x] * timefactor 						;
-				
+
 					lastratexx[x][3] = lastratexx[x][2];
 					lastratexx[x][2] = lastratexx[x][1];
 					lastratexx[x][1] = lastratexx[x][0];
 					lastratexx[x][0] = gyro[x];
-				#endif            
+				#endif
 
 				  limitf(  &pidoutput[x] , outlimit[x]);
 
 
 
-return pidoutput[x];		 		
+return pidoutput[x];
 }
 
 
