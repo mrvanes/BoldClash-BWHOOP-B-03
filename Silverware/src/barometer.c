@@ -27,7 +27,7 @@ float read_pressure(void)
 #ifdef USE_BARO_DPS310
     dps310_read_pressure();
     dps310_pcomp_lpf();
-//     dps310_tcomp_lpf(); we don't need tcomp for altitude
+//     dps310_tcomp_lpf(); //we don't need tcomp for altitude
 #else
     return 0;
 #endif
