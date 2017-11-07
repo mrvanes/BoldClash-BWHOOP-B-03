@@ -248,7 +248,7 @@ float rate_multiplier = 1.0;
 
     float throttle = 0;
 
-// In Baro mode, rx[3] is a measure for desired vertical velocity
+// In Baro mode, rx[3] is a measure for desired altitude
 // which should be translated to throttle before anything else.
 
 #ifdef ENABLE_BARO
@@ -261,7 +261,6 @@ float rate_multiplier = 1.0;
         if (rx_good)
         {
             throttle = altitude_hold();
-//             set_hover_throttle();
         }
     }
 #else
@@ -271,7 +270,7 @@ float rate_multiplier = 1.0;
     if ( rx[3] < 0.1f ) throttle = 0;           // apply deadband
     else throttle = (rx[3] - 0.1f)*1.11111111f;
 #else
-    float   spring_throttle;
+    float spring_throttle;
 //     int no_rx = (rx[0] == 0 && rx[1]== 0 && rx[2] == 0 && rx[3] == 0 && rx[4] == 0);
     spring_throttle = rx[3] - 0.5f;       // centre stick
     if (spring_throttle < 0.05f)  // apply deadband and don't use negative throttle travel
@@ -279,7 +278,7 @@ float rate_multiplier = 1.0;
         throttle = 0;
     } else
     {
-        throttle = (spring_throttle - 0.05f)*2.222222f;
+        throttle = (spring_throttle - 0.05f) * 2.222222f;
     }
 #endif
 #endif

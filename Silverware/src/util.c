@@ -33,6 +33,12 @@ float constrain(float *out, float min, float max)
     else if (*out > max) *out = max;
 }
 
+double dconstrain(double *out, double min, double max)
+{
+    if (*out < min) *out = min;
+    else if (*out > max) *out = max;
+}
+
 // calculates the coefficient for lpf filter, times in the same units
 float lpfcalc(float sampleperiod, float filtertime)
 {

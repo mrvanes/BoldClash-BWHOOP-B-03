@@ -160,7 +160,7 @@
 
 // throttle angle compensation in level mode
 // comment out to disable
-#define AUTO_THROTTLE
+//#define AUTO_THROTTLE
 
 // enable auto lower throttle near max throttle to keep control
 // mix3 works better with brushless
