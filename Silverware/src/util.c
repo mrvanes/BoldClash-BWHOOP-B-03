@@ -27,13 +27,13 @@ THE SOFTWARE.
 #include "util.h"
 #include "drv_time.h"
 
-float constrain(float *out, float min, float max)
+float constrainf(float *out, float min, float max)
 {
     if (*out < min) *out = min;
     else if (*out > max) *out = max;
 }
 
-double dconstrain(double *out, double min, double max)
+double constrain(double *out, double min, double max)
 {
     if (*out < min) *out = min;
     else if (*out > max) *out = max;
@@ -74,7 +74,7 @@ void lpf( float *out, float in , float coeff)
     *out = ( *out )* coeff + in * ( 1-coeff);
 }
 
-void dlpf( double *out, double in , double coeff)
+void lpfd( double *out, double in , double coeff)
 {
     *out = ( *out )* coeff + in * ( 1-coeff);
 }

@@ -104,8 +104,8 @@ void dps310_read_pressure(void)
         temp_raw = ((data[0]<<16 | data[1]<<8 | data[2])<<8)>>8;
         double temp_raw_sc_new  = (double) temp_raw / 524288;
 //         dlpf(&temp_raw_sc, temp_raw_sc_new, 0.9921875); // 128*
-//         dlpf(&temp_raw_sc, temp_raw_sc_new, 0.984375); // 64*
-        dlpf(&temp_raw_sc, temp_raw_sc_new, 0.96875); // 32*
+        lpfd(&temp_raw_sc, temp_raw_sc_new, 0.984375); // 64*
+//         dlpf(&temp_raw_sc, temp_raw_sc_new, 0.96875); // 32*
 //         dlpf(&temp_raw_sc, temp_raw_sc_new, 0.9375); // 16*
 //         dlpf(&temp_raw_sc, temp_raw_sc_new, 0.875); // 8*
 
@@ -119,8 +119,8 @@ void dps310_read_pressure(void)
         double press_raw_sc_new =  (double) press_raw / 524288;
 //         dlpf(&press_raw_sc, press_raw_sc_new, 0.9921875); // 128*
 //         dlpf(&press_raw_sc, press_raw_sc_new, 0.984375); // 64*
-        dlpf(&press_raw_sc, press_raw_sc_new, 0.96375); // 32*
-//         dlpf(&press_raw_sc, press_raw_sc_new, 0.9375); // 16*
+//         dlpf(&press_raw_sc, press_raw_sc_new, 0.96375); // 32*
+        lpfd(&press_raw_sc, press_raw_sc_new, 0.9375); // 16*
 //         dlpf(&press_raw_sc, press_raw_sc_new, 0.875); // 8*
 
         // Request new T sample
@@ -149,70 +149,13 @@ void dps310_readcoeffs(void)
     i2c_readdata(DPS310_I2C_ADDRESS, 0x10, buffer, 18);
 
     c0Half = ((buffer[0]<<8 | buffer[1] )<<12 )>>12; // sign extend by shifting to 32bits and back
-/*
-    c0Half = ((uint32_t)buffer[0] << 4)
-            | (((uint32_t)buffer[1] >> 4) & 0x0F);
-    if(c0Half & ((uint32_t)1 << 11)) c0Half -= (uint32_t)1 << 12;
-*/
-    c0Half = c0 / 2U;
-
-//     i2c_readdata(DPS310_I2C_ADDRESS, 0x11, buffer, 2);
+    c0Half = c0Half / 2U;
     c1 = ((buffer[1]<<8 | buffer[2] )<<16 )>>16;
-/*
-    c1 = (((uint32_t)buffer[1] & 0x0F) << 8)
-            | (uint32_t)buffer[2];
-    if(c1 & ((uint32_t)1 << 11)) c1 -= (uint32_t)1 << 12;
-*/
-//     i2c_readdata(DPS310_I2C_ADDRESS, 0x13, buffer, 3);
     c00 = ((buffer[3]<<16 | buffer[4]<<8 | buffer[5] )<<8 )>>12;
-/*
-    c00 =   ((uint32_t)buffer[3] << 12)
-            | ((uint32_t)buffer[4] << 4)
-            | (((uint32_t)buffer[5] >> 4) & 0x0F);
-    if (c00 & ((uint32_t)1 << 19)) c00 -= (uint32_t)1 << 20;
-*/
-//     i2c_readdata(DPS310_I2C_ADDRESS, 0x15, buffer, 3);
     c10 = ((buffer[5]<<16 | buffer[6]<<8 | buffer[7] )<<12 )>>12;
-/*
-    c10 =   (((uint32_t)buffer[5] & 0x0F) << 16)
-            | ((uint32_t)buffer[6] << 8)
-            | (uint32_t)buffer[7];
-    if (c10 & ((uint32_t)1<<19)) c10 -= (uint32_t)1 << 20;
-*/
-//     i2c_readdata(DPS310_I2C_ADDRESS, 0x18, buffer, 2);
     c01 = ((buffer[8]<<8 | buffer[9] )<<16 )>>16;
-/*
-    c01 =   ((uint32_t)buffer[8] << 8)
-            | (uint32_t)buffer[9];
-    if (c01 & ((uint32_t)1 << 15)) c01 -= (uint32_t)1 << 16;
-*/
-//     i2c_readdata(DPS310_I2C_ADDRESS, 0x1a, buffer, 2);
     c11 = ((buffer[10]<<8 | buffer[11] )<<16 )>>16;
-/*
-    c11 =   ((uint32_t)buffer[10] << 8)
-            | (uint32_t)buffer[11];
-    if (c11 & ((uint32_t)1 << 15)) c11 -= (uint32_t)1 << 16;
-*/
-//     i2c_readdata(DPS310_I2C_ADDRESS, 0x1c, buffer, 2);
     c20 = ((buffer[12]<<8 | buffer[13] )<<16 )>>16;
-/*
-    c20 =   ((uint32_t)buffer[12] << 8)
-            | (uint32_t)buffer[13];
-    if (c20 & ((uint32_t)1 << 15)) c20 -= (uint32_t)1 << 16;
-*/
-//     i2c_readdata(DPS310_I2C_ADDRESS, 0x1e, buffer, 2);
     c21 = ((buffer[14]<<8 | buffer[15] )<<16 )>>16;
-/*
-    c21 =   ((uint32_t)buffer[14] << 8)
-            | (uint32_t)buffer[15];
-    if (c21 & ((uint32_t)1 << 15)) c21 -= (uint32_t)1 << 16;
-*/
-//     i2c_readdata(DPS310_I2C_ADDRESS, 0x20, buffer, 2);
     c30 = ((buffer[16]<<8 | buffer[17] )<<16 )>>16;
-/*
-    c30 =   ((uint32_t)buffer[16] << 8)
-            | (uint32_t)buffer[17];
-    if (c30 & ((uint32_t)1 << 15)) c30 -= (uint32_t)1 << 16;
-*/
-
 }
