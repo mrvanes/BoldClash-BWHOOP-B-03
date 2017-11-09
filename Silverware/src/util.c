@@ -22,7 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include <math.h>
 #include "util.h"
 #include "drv_time.h"
@@ -50,7 +49,6 @@ float lpfcalc(float sampleperiod, float filtertime)
     return ga;
 }
 
-
 // calculates the coefficient for lpf filter
 float lpfcalc_hz(float sampleperiod, float filterhz)
 {
@@ -62,12 +60,10 @@ float lpfcalc_hz(float sampleperiod, float filterhz)
     return ga;
 }
 
-
 float mapf(float x, float in_min, float in_max, float out_min, float out_max)
 {
     return ((x - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min;
 }
-
 
 void lpf( float *out, float in , float coeff)
 {

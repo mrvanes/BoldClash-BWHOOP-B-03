@@ -1,3 +1,27 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2016 silverx
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 #include "drv_dps310.h"
 #include "drv_i2c.h"
 #include "drv_time.h"
@@ -47,7 +71,6 @@ void dps310_init(void)
         delay(1000);
     while (!(i2c_readreg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG)&B10000000));
 
-
     dps310_readcoeffs();
 
     // Forcing temp_sensor_type to B10000000 results in realistic T readings,
@@ -62,23 +85,13 @@ void dps310_init(void)
     // set CFG_REG
     i2c_writereg(DPS310_I2C_ADDRESS, DPS310_CFG_REG, B00000000); // Disable T_SHIFT, P_SHIFT
 
-    // Try some magic
-//     i2c_writereg(DPS310_I2C_ADDRESS, 0x0E, 0xA5);
-//     i2c_writereg(DPS310_I2C_ADDRESS, 0x0F, 0x96);
-//     i2c_writereg(DPS310_I2C_ADDRESS, 0x62, 0x02);
-//     i2c_writereg(DPS310_I2C_ADDRESS, 0x0E, 0x00);
-//     i2c_writereg(DPS310_I2C_ADDRESS, 0x0F, 0x00);
-
     // Prime P readout with valid P&T values
     // Request next T sample
     i2c_writereg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG, B00000010); // New T sample
-
     delay(100000);
     dps310_read_pressure(); // T
     delay(100000);
     dps310_read_pressure(); // P
-//     delay(100000);
-//     dps310_read_pressure(); // T
 }
 
 int dps310_check(void)
@@ -91,7 +104,6 @@ int dps310_check(void)
 void dps310_read_pressure(void)
 {
     int32_t press_raw, temp_raw = 0;
-//     float new_temp_fl, new_press_fl;
     int rdy = 0;
     int data[3];
 
@@ -103,11 +115,11 @@ void dps310_read_pressure(void)
         i2c_readdata(DPS310_I2C_ADDRESS, DPS310_TMP, data, 3);
         temp_raw = ((data[0]<<16 | data[1]<<8 | data[2])<<8)>>8;
         double temp_raw_sc_new  = (double) temp_raw / 524288;
-//         dlpf(&temp_raw_sc, temp_raw_sc_new, 0.9921875); // 128*
+//         lpfd(&temp_raw_sc, temp_raw_sc_new, 0.9921875); // 128*
         lpfd(&temp_raw_sc, temp_raw_sc_new, 0.984375); // 64*
-//         dlpf(&temp_raw_sc, temp_raw_sc_new, 0.96875); // 32*
-//         dlpf(&temp_raw_sc, temp_raw_sc_new, 0.9375); // 16*
-//         dlpf(&temp_raw_sc, temp_raw_sc_new, 0.875); // 8*
+//         lpfd(&temp_raw_sc, temp_raw_sc_new, 0.96875); // 32*
+//         lpfd(&temp_raw_sc, temp_raw_sc_new, 0.9375); // 16*
+//         lpfd(&temp_raw_sc, temp_raw_sc_new, 0.875); // 8*
 
         // Request new P sample
         i2c_writereg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG, B00000001);
@@ -117,11 +129,11 @@ void dps310_read_pressure(void)
         i2c_readdata(DPS310_I2C_ADDRESS, DPS310_PSR, data, 3);
         press_raw = ((data[0]<<16 | data[1]<<8 | data[2])<<8)>>8;
         double press_raw_sc_new =  (double) press_raw / 524288;
-//         dlpf(&press_raw_sc, press_raw_sc_new, 0.9921875); // 128*
-//         dlpf(&press_raw_sc, press_raw_sc_new, 0.984375); // 64*
-//         dlpf(&press_raw_sc, press_raw_sc_new, 0.96375); // 32*
+//         lpfd(&press_raw_sc, press_raw_sc_new, 0.9921875); // 128*
+//         lpfd(&press_raw_sc, press_raw_sc_new, 0.984375); // 64*
+//         lpfd(&press_raw_sc, press_raw_sc_new, 0.96375); // 32*
         lpfd(&press_raw_sc, press_raw_sc_new, 0.9375); // 16*
-//         dlpf(&press_raw_sc, press_raw_sc_new, 0.875); // 8*
+//         lpfd(&press_raw_sc, press_raw_sc_new, 0.875); // 8*
 
         // Request new T sample
         i2c_writereg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG, B00000010);
@@ -131,14 +143,10 @@ void dps310_read_pressure(void)
 
 void dps310_tcomp_lpf(void) {
     temp_fl = c0Half + c1 * temp_raw_sc;
-//     double new_temp_fl = c0 * 0.5f + c1 * temp_raw_sc;
-//     dlpf(&temp_fl, new_temp_fl, 0.96875f);
 }
 
 void dps310_pcomp_lpf(void) {
-    press_fl =        c00 + press_raw_sc * (c10 + press_raw_sc * (c20 + press_raw_sc * c30)) + (c01 * temp_raw_sc) + temp_raw_sc * press_raw_sc * (c11 + c21 * press_raw_sc);
-//     float new_press_fl = c00 + press_raw_sc * (c10 + press_raw_sc * (c20 + press_raw_sc * c30)) + (c01 * temp_raw_sc) + temp_raw_sc * press_raw_sc * (c11 + c21 * press_raw_sc);
-//     dlpf(&press_fl,new_press_fl, 0.96875f); // 32*
+    press_fl = c00 + press_raw_sc * (c10 + press_raw_sc * (c20 + press_raw_sc * c30)) + (c01 * temp_raw_sc) + temp_raw_sc * press_raw_sc * (c11 + c21 * press_raw_sc);
 }
 
 
