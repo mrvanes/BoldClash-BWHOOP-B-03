@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 #ifdef ENABLE_BARO
 #undefine THROTTLE_SMOOTH
-#undefine AUTO_THROTTLE
+// #undefine AUTO_THROTTLE
 #endif
 
 void barometer_init(void)

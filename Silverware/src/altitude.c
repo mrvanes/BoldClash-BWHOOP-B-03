@@ -32,8 +32,8 @@ THE SOFTWARE.
 
 #define AH_REFRESH_FREQ        75.0f   // AH logic refresh rate
 
-#define HOVER_THROTTLE_MIN      0.3f   // minimum possible hover throttle
-#define HOVER_THROTTLE_MAX      0.9f   // maximum possible hover throttle
+#define HOVER_THROTTLE_MIN      0.2f   // minimum possible hover throttle
+#define HOVER_THROTTLE_MAX      1.0f   // maximum possible hover throttle
 
 // Define maximum velocity for full throttle in m/s
 #define FULL_THROTTLE_ALT_SET  0.2f
@@ -49,12 +49,13 @@ extern float rx[];
 // extern float gyro[];
 extern float accel[];
 
-double accel_alt = 0;
+double new_accel_alt, accel_alt = 0;
+double new_accel_vel, accel_vel = 0;
 
 double altitude = 0;
 double alt_set = 0;
 
-double last_alt_e, alt_i, alt_corr = 0;     // PID loop memory
+double last_alt_e, last_accel_alt, last_accel_vel, alt_i = 0;     // PID loop memory
 
 float ah_throttle = HOVER_THROTTLE_MIN;
 
@@ -82,22 +83,22 @@ float altitude_hold(void)
 {
     float new_ah_throttle = HOVER_THROTTLE_MIN;
 
-    double new_alt_e, alt_e, new_alt_d, alt_d = 0;
-    double new_alt_corr;
-    double new_alt_set;
+    double accel_z, new_accel_vel;
+    double new_alt_e, alt_e, new_alt_d, alt_d, alt_corr = 0;
+    double new_alt_corr, new_alt_set;
 
     float dt;
 
     float ah_time = gettime();
-    dt = (ah_time - last_ah_time) * 1e-6;      // dt in seconds
-    if (dt < 1.0/AH_REFRESH_FREQ) {                          // 50Hz AH refresh rate
-        lpf(&ah_throttle, ah_throttle, lpfcalc_hz(dt, AH_REFRESH_FREQ));    // interpolate values between refresh
+    dt = (ah_time - last_ah_time) * 1e-6;                   // dt in seconds
+    if (dt < 1.0/AH_REFRESH_FREQ) {                         // AH refresh rate
+        lpf(&ah_throttle, ah_throttle, lpfcalc_hz(dt, AH_REFRESH_FREQ));    // Interpolate values between refresh
         return ah_throttle;
     }
     last_ah_time = ah_time;
 
 //     dt = looptime;
-    float newrx = rx[3] - 0.5f;           // zero center throttle
+    float newrx = rx[3] - 0.5f;           // Zero center throttle
 
     if (fabs(newrx) > 0.05f)
     {
@@ -108,9 +109,18 @@ float altitude_hold(void)
         lpfd(&alt_set, new_alt_set, lpfcalc(dt, 0.2f));             // Easy climbing and descending
     }
 
-    // Incorporate gyro in alt estimation, compensate for lpf baro lag
-    double new_accel_alt = accel_alt + (accel[2] - 1) * dt * dt;      // (m/s^2) * s * s = m
-    lpfd(&accel_alt, new_accel_alt, lpfcalc(dt, 0.1f));               //
+    // Use gyro in altitude estimation, compensate for lpf baro lag
+    accel_z = accel[2] - 1;
+
+    new_accel_vel += accel_z * dt;
+    hpfd(&accel_vel, new_accel_vel - last_accel_vel, lpfcalc(dt, 2.0f));    // Remove DC component from accel_vel, we have baro for that
+//     accel_vel = new_accel_vel;
+    last_accel_vel = new_accel_vel;
+
+    new_accel_alt += accel_vel * dt;
+    hpfd(&accel_alt, new_accel_alt - last_accel_alt, lpfcalc(dt, 2.0f));    // Remove DC component from accel_alt, we have baro for that
+//     accel_alt = new_accel_alt;
+    last_accel_alt = new_accel_alt;
 
     // ALT PID
     alt_e = (alt_set - (altitude + accel_alt));                  // m
