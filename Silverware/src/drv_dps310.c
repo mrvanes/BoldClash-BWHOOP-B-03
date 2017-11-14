@@ -48,6 +48,8 @@ THE SOFTWARE.
 #define T_RDY B00100000
 #define P_RDY B00010000
 
+extern float looptime;
+
 //      199         -259 79830 -51103 -2647 1325 -7843 -102 -788
 int32_t  c0, c0Half,  c1,  c00,   c10,  c01, c11,  c20, c21, c30;
 double press_raw_sc, temp_raw_sc, press_fl, temp_fl;
@@ -121,6 +123,8 @@ void dps310_read_pressure(void)
 //         lpfd(&temp_raw_sc, temp_raw_sc_new, 0.9375); // 16*
 //         lpfd(&temp_raw_sc, temp_raw_sc_new, 0.875); // 8*
 
+//         lpfd(&temp_raw_sc, temp_raw_sc_new, lpfcalc(looptime, 1.0f));
+
         // Request new P sample
         i2c_writereg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG, B00000001);
 
@@ -131,9 +135,12 @@ void dps310_read_pressure(void)
         double press_raw_sc_new =  (double) press_raw / 524288;
 //         lpfd(&press_raw_sc, press_raw_sc_new, 0.9921875); // 128*
 //         lpfd(&press_raw_sc, press_raw_sc_new, 0.984375); // 64*
-//         lpfd(&press_raw_sc, press_raw_sc_new, 0.96375); // 32*
-        lpfd(&press_raw_sc, press_raw_sc_new, 0.9375); // 16*
+        lpfd(&press_raw_sc, press_raw_sc_new, 0.96375); // 32*
+//         lpfd(&press_raw_sc, press_raw_sc_new, 0.9375); // 16*
 //         lpfd(&press_raw_sc, press_raw_sc_new, 0.875); // 8*
+
+//         lpfd(&press_raw_sc, press_raw_sc_new, lpfcalc(looptime, 0.2f));
+
 
         // Request new T sample
         i2c_writereg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG, B00000010);

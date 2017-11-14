@@ -67,12 +67,22 @@ float mapf(float x, float in_min, float in_max, float out_min, float out_max)
 
 void lpf( float *out, float in , float coeff)
 {
-    *out = ( *out )* coeff + in * ( 1-coeff);
+    *out = ( *out ) * coeff + in * ( 1 - coeff );
+}
+
+void hpf( float *out, float delta_in, float coeff)
+{
+    *out = ( *out + delta_in ) * coeff;
+}
+
+void hpfd( double *out, double delta_in, double coeff)
+{
+    *out = ( *out + delta_in ) * coeff;
 }
 
 void lpfd( double *out, double in , double coeff)
 {
-    *out = ( *out )* coeff + in * ( 1-coeff);
+    *out = ( *out ) * coeff + in * ( 1 - coeff );
 }
 
 void limitf ( float *input , const float limit)
