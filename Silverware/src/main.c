@@ -290,14 +290,14 @@ int main(void)
         // read gyro and accelerometer data
         sixaxis_read();
 
+        // attitude calculations for level mode
+        extern void imu_calc(void);
+        imu_calc();
+
 #ifdef ENABLE_BARO
         // read the altitude
         altitude_read();
 #endif
-
-        // attitude calculations for level mode
-        extern void imu_calc(void);
-        imu_calc();
 
         // all flight calculations and motors
         control();

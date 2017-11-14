@@ -32,8 +32,8 @@ THE SOFTWARE.
 
 #define AH_REFRESH_FREQ        75.0f   // AH logic refresh rate
 
-#define HOVER_THROTTLE_MIN      0.2f   // minimum possible hover throttle
-#define HOVER_THROTTLE_MAX      1.0f   // maximum possible hover throttle
+#define HOVER_THROTTLE_MIN      0.3f   // minimum possible hover throttle
+#define HOVER_THROTTLE_MAX      0.8f   // maximum possible hover throttle
 
 // Define maximum velocity for full throttle in m/s
 #define FULL_THROTTLE_ALT_SET  0.2f
@@ -46,7 +46,7 @@ extern float looptime;
 extern double press_fl;
 
 extern float rx[];
-// extern float gyro[];
+extern float gyro[];
 extern float accel[];
 
 double new_accel_alt, accel_alt = 0;
@@ -61,9 +61,25 @@ float ah_throttle = HOVER_THROTTLE_MIN;
 
 void altitude_read(void)
 {
+    double accel_z;
+
     read_pressure();
     altitude = (1.0 - pow(press_fl/101325.0, 0.190295)) * 44330.0; // pressure to altitude @sea-level
 
+     // Use gyro in altitude estimation, compensate for lpf baro lag
+    accel_z = accel[2] - 1;
+
+    new_accel_vel += accel_z * looptime;
+    hpfd(&accel_vel, new_accel_vel - last_accel_vel, lpfcalc(looptime, 4.0f));    // Remove DC component from accel_vel, we have baro for that
+//     accel_vel = new_accel_vel;
+    last_accel_vel = new_accel_vel;
+
+    new_accel_alt += accel_vel * looptime;
+    hpfd(&accel_alt, new_accel_alt - last_accel_alt, lpfcalc(looptime, 4.0f));    // Remove DC component from accel_alt, we have baro for that
+//     accel_alt = new_accel_alt;
+    last_accel_alt = new_accel_alt;
+
+    altitude += accel_alt;
 }
 
 void altitude_cal(void)
@@ -83,7 +99,6 @@ float altitude_hold(void)
 {
     float new_ah_throttle = HOVER_THROTTLE_MIN;
 
-    double accel_z, new_accel_vel;
     double new_alt_e, alt_e, new_alt_d, alt_d, alt_corr = 0;
     double new_alt_corr, new_alt_set;
 
@@ -109,21 +124,8 @@ float altitude_hold(void)
         lpfd(&alt_set, new_alt_set, lpfcalc(dt, 0.2f));             // Easy climbing and descending
     }
 
-    // Use gyro in altitude estimation, compensate for lpf baro lag
-    accel_z = accel[2] - 1;
-
-    new_accel_vel += accel_z * dt;
-    hpfd(&accel_vel, new_accel_vel - last_accel_vel, lpfcalc(dt, 2.0f));    // Remove DC component from accel_vel, we have baro for that
-//     accel_vel = new_accel_vel;
-    last_accel_vel = new_accel_vel;
-
-    new_accel_alt += accel_vel * dt;
-    hpfd(&accel_alt, new_accel_alt - last_accel_alt, lpfcalc(dt, 2.0f));    // Remove DC component from accel_alt, we have baro for that
-//     accel_alt = new_accel_alt;
-    last_accel_alt = new_accel_alt;
-
     // ALT PID
-    alt_e = (alt_set - (altitude + accel_alt));                  // m
+    alt_e = alt_set - altitude;                  // m
     constrain(&alt_e, -1.0 * FULL_THROTTLE_ALT_SET, FULL_THROTTLE_ALT_SET);  // Apply FULL_THROTTLE_ALT_SET leash
 
     alt_i += alt_e * dt;
@@ -139,8 +141,8 @@ float altitude_hold(void)
     new_ah_throttle = ah_throttle + alt_corr;
     constrainf(&new_ah_throttle, HOVER_THROTTLE_MIN, HOVER_THROTTLE_MAX);
 
-    lpf(&ah_throttle, new_ah_throttle, lpfcalc_hz(dt, AH_REFRESH_FREQ));
-//     ah_throttle = new_ah_throttle;
+//     lpf(&ah_throttle, new_ah_throttle, lpfcalc_hz(dt, AH_REFRESH_FREQ));
+    ah_throttle = new_ah_throttle;
 
     last_alt_e = alt_e;
 

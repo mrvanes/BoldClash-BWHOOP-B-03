@@ -128,8 +128,8 @@ void dps310_read_pressure(void)
         double press_raw_sc_new =  (double) press_raw / 524288.0;
 //         lpfd(&press_raw_sc, press_raw_sc_new, 0.9921875); // 128*
 //         lpfd(&press_raw_sc, press_raw_sc_new, 0.984375); // 64*
-//         lpfd(&press_raw_sc, press_raw_sc_new, 0.96375); // 32*
-        lpfd(&press_raw_sc, press_raw_sc_new, 0.9375); // 16*
+        lpfd(&press_raw_sc, press_raw_sc_new, 0.96375); // 32*
+//         lpfd(&press_raw_sc, press_raw_sc_new, 0.9375); // 16*
 //         lpfd(&press_raw_sc, press_raw_sc_new, 0.875); // 8*
 
         // Request new T sample

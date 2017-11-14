@@ -175,7 +175,7 @@
 
 // pwm pins disable
 // disable all pwm pins / function
-// #define DISABLE_PWM_PINS
+//#define DISABLE_PWM_PINS
 
 // pwm pin initialization
 // enable the pwm pins to be used here ( multiple pins ok)

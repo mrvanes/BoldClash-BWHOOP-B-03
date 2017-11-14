@@ -237,7 +237,6 @@ float rate_multiplier = 1.0;
 
             error[0] = rxcopy[0] * (float) MAX_RATE * DEGTORAD  - gyro[0];
             error[1] = rxcopy[1] * (float) MAX_RATE * DEGTORAD  - gyro[1];
-
             error[2] = rxcopy[2] * (float) MAX_RATEYAW * DEGTORAD  - gyro[2];
 
         }
