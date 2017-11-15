@@ -33,10 +33,12 @@ THE SOFTWARE.
 #define AH_REFRESH_FREQ        75.0f   // AH logic refresh rate
 
 #define HOVER_THROTTLE_MIN      0.3f   // minimum possible hover throttle
-#define HOVER_THROTTLE_MAX      0.8f   // maximum possible hover throttle
+#define HOVER_THROTTLE_MAX      1.0f   // maximum possible hover throttle
 
 // Define maximum velocity for full throttle in m/s
 #define FULL_THROTTLE_ALT_SET  0.2f
+
+#define ACC_ALT_FILTERTIME    10.0f
 
 #define ALT_P 0.1f
 #define ALT_I 0.1f
@@ -45,9 +47,9 @@ THE SOFTWARE.
 extern float looptime;
 extern double press_fl;
 
-extern float rx[];
-extern float gyro[];
-extern float accel[];
+extern float rx[4];
+extern float gyro[3];
+extern float accel[3];
 
 double new_accel_alt, accel_alt = 0;
 double new_accel_vel, accel_vel = 0;
@@ -61,21 +63,43 @@ float ah_throttle = HOVER_THROTTLE_MIN;
 
 void altitude_read(void)
 {
-    double accel_z;
-
     read_pressure();
     altitude = (1.0 - pow(press_fl/101325.0, 0.190295)) * 44330.0; // pressure to altitude @sea-level
 
-     // Use gyro in altitude estimation, compensate for lpf baro lag
+//     accel_altitude_read(looptime);
+}
+
+void accel_altitude_read(float t)
+{
+    double accel_z;
+
+    // Use gyro in altitude estimation, compensate for lpf baro lag
     accel_z = accel[2] - 1;
 
-    new_accel_vel += accel_z * looptime;
-    hpfd(&accel_vel, new_accel_vel - last_accel_vel, lpfcalc(looptime, 4.0f));    // Remove DC component from accel_vel, we have baro for that
-//     accel_vel = new_accel_vel;
+    if (fabs(accel_z) > 0.1)
+    {
+        // Integrate acceleration to velocity
+        new_accel_vel += accel_z * t;
+
+        // Remove DC component from accel_vel, we have baro for that
+        // t=0.5 = 0.25m/g = 0.5m/g/s
+        hpfd(&accel_vel, new_accel_vel - last_accel_vel, lpfcalc(t, ACC_ALT_FILTERTIME));
+    //     accel_vel = new_accel_vel;
+
+        // Integrate velocity to altitude
+        new_accel_alt += accel_vel * t;
+    }
+    else
+    {
+        // We want accel correction to become zero on hover
+        new_accel_vel = 0;
+        new_accel_alt = 0;
+    }
+
     last_accel_vel = new_accel_vel;
 
-    new_accel_alt += accel_vel * looptime;
-    hpfd(&accel_alt, new_accel_alt - last_accel_alt, lpfcalc(looptime, 4.0f));    // Remove DC component from accel_alt, we have baro for that
+    // Remove DC component from accel_alt, we have baro for that
+    hpfd(&accel_alt, new_accel_alt - last_accel_alt, lpfcalc(t, ACC_ALT_FILTERTIME));
 //     accel_alt = new_accel_alt;
     last_accel_alt = new_accel_alt;
 
@@ -112,7 +136,10 @@ float altitude_hold(void)
     }
     last_ah_time = ah_time;
 
-//     dt = looptime;
+    // Add accel altitude correction
+//     accel_altitude_read(dt);
+
+//    dt = looptime;
     float newrx = rx[3] - 0.5f;           // Zero center throttle
 
     if (fabs(newrx) > 0.05f)
@@ -123,6 +150,7 @@ float altitude_hold(void)
         new_alt_set = altitude + newrx * FULL_THROTTLE_ALT_SET;     // Add +/- FULL_THROTTLE_ALT_SET meter to altitude for full throttle travel
         lpfd(&alt_set, new_alt_set, lpfcalc(dt, 0.2f));             // Easy climbing and descending
     }
+
 
     // ALT PID
     alt_e = alt_set - altitude;                  // m

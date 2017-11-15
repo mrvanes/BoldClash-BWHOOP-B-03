@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "hardware.h"
 #include "binary.h"
 #include "util.h"
+#include "control.h"
 #include <math.h>
 
 #define DPS310_PSR 0x00
@@ -131,6 +132,8 @@ void dps310_read_pressure(void)
         lpfd(&press_raw_sc, press_raw_sc_new, 0.96375); // 32*
 //         lpfd(&press_raw_sc, press_raw_sc_new, 0.9375); // 16*
 //         lpfd(&press_raw_sc, press_raw_sc_new, 0.875); // 8*
+
+//         lpfd(&press_raw_sc, press_raw_sc_new, lpfcalc(looptime, 1.0f));
 
         // Request new T sample
         i2c_writereg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG, B00000010);
