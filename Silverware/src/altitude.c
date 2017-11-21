@@ -30,149 +30,90 @@ THE SOFTWARE.
 #include "drv_time.h"
 #include <math.h>
 
-#define AH_REFRESH_FREQ        75.0f   // AH logic refresh rate
+#define AH_REFRESH_FREQ        50.0f
 
-#define HOVER_THROTTLE_MIN      0.3f   // minimum possible hover throttle
-#define HOVER_THROTTLE_MAX      1.0f   // maximum possible hover throttle
+#define HOVER_THROTTLE_MIN      0.2f
+#define HOVER_THROTTLE_MAX      1.0f
 
-// Define maximum velocity for full throttle in m/s
-#define FULL_THROTTLE_ALT_SET  0.2f
-
-#define ACC_ALT_FILTERTIME    10.0f
+// Define maximum target distance for full throttle in m
+#define FULL_THROTTLE_ALT_TARGET  0.2f
 
 #define ALT_P 0.1f
 #define ALT_I 0.1f
-#define ALT_D 0.15f
+#define ALT_D 0.06f
 
-extern float looptime;
+// extern float looptime;
 extern double press_fl;
 
 extern float rx[4];
-extern float gyro[3];
-extern float accel[3];
 
-double new_accel_alt, accel_alt = 0;
-double new_accel_vel, accel_vel = 0;
-
-double altitude = 0;
-double alt_set = 0;
-
-double last_alt_e, last_accel_alt, last_accel_vel, alt_i = 0;     // PID loop memory
-
-float ah_throttle = HOVER_THROTTLE_MIN;
+float altitude = 0;
+float alt_target = 0;
 
 void altitude_read(void)
 {
     read_pressure();
     altitude = (1.0 - pow(press_fl/101325.0, 0.190295)) * 44330.0; // pressure to altitude @sea-level
-
-//     accel_altitude_read(looptime);
-}
-
-void accel_altitude_read(float t)
-{
-    double accel_z;
-
-    // Use gyro in altitude estimation, compensate for lpf baro lag
-    accel_z = accel[2] - 1;
-
-    if (fabs(accel_z) > 0.1)
-    {
-        // Integrate acceleration to velocity
-        new_accel_vel += accel_z * t;
-
-        // Remove DC component from accel_vel, we have baro for that
-        // t=0.5 = 0.25m/g = 0.5m/g/s
-        hpfd(&accel_vel, new_accel_vel - last_accel_vel, lpfcalc(t, ACC_ALT_FILTERTIME));
-    //     accel_vel = new_accel_vel;
-
-        // Integrate velocity to altitude
-        new_accel_alt += accel_vel * t;
-    }
-    else
-    {
-        // We want accel correction to become zero on hover
-        new_accel_vel = 0;
-        new_accel_alt = 0;
-    }
-
-    last_accel_vel = new_accel_vel;
-
-    // Remove DC component from accel_alt, we have baro for that
-    hpfd(&accel_alt, new_accel_alt - last_accel_alt, lpfcalc(t, ACC_ALT_FILTERTIME));
-//     accel_alt = new_accel_alt;
-    last_accel_alt = new_accel_alt;
-
-    altitude += accel_alt;
 }
 
 void altitude_cal(void)
 {
-    // prime pressure reading ldf
-    for (int y = 0; y < 1000; y++)
+    // prime pressure reading
+    for (int y = 0; y < 10; y++)
         {
-            altitude_read();
-            delay(300);
+            read_pressure();
+            delay(500);
         }
-     alt_set = altitude; // Start with target at resting position
+    altitude_read();
+    alt_target = altitude; // Start with target at resting position
 }
-
-float last_ah_time;
 
 float altitude_hold(void)
 {
-    float new_ah_throttle = HOVER_THROTTLE_MIN;
+    static float last_alt_e, alt_i;     // PID loop memory
+    static float new_ah_throttle, ah_throttle = HOVER_THROTTLE_MIN;
+    static float last_dt, last_ah_time;
 
-    double new_alt_e, alt_e, new_alt_d, alt_d, alt_corr = 0;
-    double new_alt_corr, new_alt_set;
-
-    float dt;
+    float new_alt_e, alt_e, new_alt_d, alt_d, alt_corr = 0;
+    float new_alt_corr, new_alt_target = 0;
 
     float ah_time = gettime();
-    dt = (ah_time - last_ah_time) * 1e-6;                   // dt in seconds
-    if (dt < 1.0/AH_REFRESH_FREQ) {                         // AH refresh rate
-        lpf(&ah_throttle, ah_throttle, lpfcalc_hz(dt, AH_REFRESH_FREQ));    // Interpolate values between refresh
-        return ah_throttle;
+    float dt = (ah_time - last_ah_time) * 1e-6; // dt in seconds
+
+    if (dt > 1.0/AH_REFRESH_FREQ) {
+
+        last_ah_time = ah_time;
+        last_dt = dt;
+
+        float newrx = rx[3] - 0.5f;           // Zero center throttle
+
+        if (fabs(newrx) > 0.05f)
+        {
+            if (newrx > 0) newrx -= 0.05f;
+            else newrx += 0.05f;
+            newrx *= 2.222222f; // newrx [-1.0f, 1.0f]
+            new_alt_target = altitude + newrx * FULL_THROTTLE_ALT_TARGET;     // Add +/- FULL_THROTTLE_ALT_TARGET meter to altitude for full throttle travel
+            lpf(&alt_target, new_alt_target, lpfcalc(dt, 0.25f));             // Easy climbing and descending
+//             alt_target = new_alt_target;
+        }
+
+        // ALT PID
+        alt_e = alt_target - altitude;
+        constrain(&alt_e, -1.0 * FULL_THROTTLE_ALT_TARGET, FULL_THROTTLE_ALT_TARGET);  // Apply FULL_THROTTLE_ALT_TARGET leash
+
+        alt_i += alt_e * dt;
+        constrain(&alt_i, -1.0, 1.0);
+
+        alt_d = (alt_e - last_alt_e) / dt;
+
+        alt_corr = ALT_P * alt_e + ALT_I * alt_i + ALT_D * alt_d;
+
+        new_ah_throttle = ah_throttle + alt_corr;
+        constrain(&new_ah_throttle, HOVER_THROTTLE_MIN, HOVER_THROTTLE_MAX);
+
+        last_alt_e = alt_e;
+        ah_throttle = new_ah_throttle;
     }
-    last_ah_time = ah_time;
-
-    // Add accel altitude correction
-//     accel_altitude_read(dt);
-
-//    dt = looptime;
-    float newrx = rx[3] - 0.5f;           // Zero center throttle
-
-    if (fabs(newrx) > 0.05f)
-    {
-        if (newrx > 0) newrx -= 0.05f;
-        else newrx += 0.05f;
-        newrx *= 2.222222f; // newrx [-1.0f, 1.0f]
-        new_alt_set = altitude + newrx * FULL_THROTTLE_ALT_SET;     // Add +/- FULL_THROTTLE_ALT_SET meter to altitude for full throttle travel
-        lpfd(&alt_set, new_alt_set, lpfcalc(dt, 0.2f));             // Easy climbing and descending
-    }
-
-
-    // ALT PID
-    alt_e = alt_set - altitude;                  // m
-    constrain(&alt_e, -1.0 * FULL_THROTTLE_ALT_SET, FULL_THROTTLE_ALT_SET);  // Apply FULL_THROTTLE_ALT_SET leash
-
-    alt_i += alt_e * dt;
-//     constrain(&alt_i, -100.0, 100.0);
-
-    new_alt_d = (alt_e - last_alt_e) / dt;
-//     lpfd(&alt_d, new_alt_d, lpfcalc(dt, 0.02f));
-    alt_d = new_alt_d;
-
-    alt_corr = ALT_P * alt_e + ALT_I * alt_i + ALT_D * alt_d;
-//     lpfd(&alt_corr, new_alt_corr, lpfcalc(dt, 0.1f));
-
-    new_ah_throttle = ah_throttle + alt_corr;
-    constrainf(&new_ah_throttle, HOVER_THROTTLE_MIN, HOVER_THROTTLE_MAX);
-
-//     lpf(&ah_throttle, new_ah_throttle, lpfcalc_hz(dt, AH_REFRESH_FREQ));
-    ah_throttle = new_ah_throttle;
-
-    last_alt_e = alt_e;
 
     return ah_throttle;
 }

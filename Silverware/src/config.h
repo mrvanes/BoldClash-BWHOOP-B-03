@@ -100,7 +100,7 @@
 // CH_OFF - off always ( all protocols)
 
 // rates / expert mode
-#define RATES CH_EXPERT
+#define RATES CH_OFF
 
 #define LEVELMODE CH_AUX1
 
@@ -160,7 +160,7 @@
 
 // throttle angle compensation in level mode
 // comment out to disable
-#define AUTO_THROTTLE
+//#define AUTO_THROTTLE
 
 // enable auto lower throttle near max throttle to keep control
 // mix3 works better with brushless

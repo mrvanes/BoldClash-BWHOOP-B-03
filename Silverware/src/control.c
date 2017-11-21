@@ -44,7 +44,6 @@ THE SOFTWARE.
 
 extern float rx[];
 extern float gyro[3];
-extern float altitude;
 extern int failsafe;
 extern float pidoutput[PIDNUMBER];
 
@@ -253,6 +252,7 @@ float rate_multiplier = 1.0;
 #ifdef ENABLE_BARO
     extern int rxmode;
     int rx_good = 0;
+    extern float altitude, alt_target;
 
     if (aux[LEVELMODE] && rxmode == RXMODE_NORMAL)
     {
@@ -260,6 +260,10 @@ float rate_multiplier = 1.0;
         if (rx_good)
         {
             throttle = altitude_hold();
+        }
+        else
+        {
+            alt_target = altitude;
         }
     }
 #else

@@ -1,5 +1,5 @@
-float constrainf(float *out, float min, float max);
-double constrain(double *out, double min, double max);
+float constrain(float *out, float min, float max);
+double constraind(double *out, double min, double max);
 float lpfcalc( float sampleperiod , float filtertime);
 float lpfcalc_hz(float sampleperiod, float filterhz);
 float mapf(float x, float in_min, float in_max, float out_min, float out_max);

@@ -26,13 +26,13 @@ THE SOFTWARE.
 #include "util.h"
 #include "drv_time.h"
 
-float constrainf(float *out, float min, float max)
+float constrain(float *out, float min, float max)
 {
     if (*out < min) *out = min;
     else if (*out > max) *out = max;
 }
 
-double constrain(double *out, double min, double max)
+double constraind(double *out, double min, double max)
 {
     if (*out < min) *out = min;
     else if (*out > max) *out = max;

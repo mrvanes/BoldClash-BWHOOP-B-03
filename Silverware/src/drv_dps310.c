@@ -49,9 +49,42 @@ THE SOFTWARE.
 #define T_RDY B00100000
 #define P_RDY B00010000
 
-extern float looptime;
+// Select Temperature sensor oversampling rate
+// #define TEMP_FACTOR  524288.0
+// #define TEMP_FACTOR 1572864.0
+#define TEMP_FACTOR 3670016.0
+// #define TEMP_FACTOR 7864320.0
+// #define TEMP_FACTOR  253952.0
+// #define TEMP_FACTOR  516096.0
+// #define TEMP_FACTOR 1040384.0
+// #define TEMP_FACTOR 2088960.0
 
-//      199         -259 79830 -51103 -2647 1325 -7843 -102 -788
+
+// Select Temperature sensor LPF rate
+// #define TEMP_LPF     0.75
+#define TEMP_LPF    0.875
+// #define TEMP_LPF   0.9375
+// #define TEMP_LPF  0.96875
+// #define TEMP_LPF 0.984375
+
+// Select Pressure sensor oversampling rate
+// #define PRESS_FACTOR  524288.0
+// #define PRESS_FACTOR 1572864.0
+#define PRESS_FACTOR 3670016.0
+// #define PRESS_FACTOR 7864320.0
+// #define PRESS_FACTOR 253952.0
+// #define PRESS_FACTOR  516096.0
+// #define PRESS_FACTOR 1040384.0
+// #define PRESS_FACTOR 2088960.0
+
+// Select Pressure sensor LPF rate
+// #define PRESS_LPF     0.75
+#define PRESS_LPF    0.875
+// #define PRESS_LPF   0.9375
+// #define PRESS_LPF  0.96875
+// #define PRESS_LPF 0.984375
+
+//      199    100, -259 79830 -51103 -2647 1325 -7843 -102 -788
 int32_t  c0, c0Half,  c1,  c00,   c10,  c01, c11,  c20, c21, c30;
 double press_raw_sc, temp_raw_sc, press_fl, temp_fl;
 
@@ -77,18 +110,20 @@ void dps310_init(void)
     dps310_readcoeffs();
 
     // Forcing temp_sensor_type to B10000000 results in realistic T readings,
-    // but B00000000 from DPS310_COEF_SRCE results in less P drift
+    // int temp_sensor_type = B10000000;
     int temp_sensor_type = i2c_readreg(DPS310_I2C_ADDRESS, DPS310_COEF_SRCE)&B10000000;
-//     int temp_sensor_type = B10000000; // The sensor on bwhoop seems to report temp_sensor_type wrong? Override with B10000000.
 
-    // pressure config. Sample as quickly as possible, do oversampling in software
-    i2c_writereg(DPS310_I2C_ADDRESS, DPS310_PSR_CFG, B00000000);// 0 meas/sec | 1 times oversampling, needs no P_SHIFT
     // temp config
-    i2c_writereg(DPS310_I2C_ADDRESS, DPS310_TMP_CFG, B00000000|temp_sensor_type); // 0 meas/sec / 1 times oversampling, needs no T_SHIFT
-    // set CFG_REG
-    i2c_writereg(DPS310_I2C_ADDRESS, DPS310_CFG_REG, B00000000); // Disable T_SHIFT, P_SHIFT
+    i2c_writereg(DPS310_I2C_ADDRESS, DPS310_TMP_CFG, B00000010|temp_sensor_type); // 0 meas/sec / 4x oversampling
 
-    // Prime P readout with valid P&T values
+    // pressure config
+    i2c_writereg(DPS310_I2C_ADDRESS, DPS310_PSR_CFG, B00000010); // 0 meas/sec | 4x oversampling
+
+    // set CFG_REG
+    i2c_writereg(DPS310_I2C_ADDRESS, DPS310_CFG_REG, B00000000); // Disable T_SHIFT, P_SHIFT (1,2,4,8)
+//     i2c_writereg(DPS310_I2C_ADDRESS, DPS310_CFG_REG, B00001100); // Ensable T_SHIFT, P_SHIFT (16,32,64,128)
+
+    // Prime LPF with valid P&T values
     dps310_prime();
 }
 
@@ -99,9 +134,12 @@ int dps310_check(void)
     return (DPS310_ID==id);
 }
 
+// double temp_raw_sc_new, press_raw_sc_new = 0;
+
 void dps310_read_pressure(void)
 {
     int32_t press_raw, temp_raw = 0;
+    static double temp_raw_sc_new, press_raw_sc_new;
     int rdy = 0;
     int data[3];
 
@@ -112,12 +150,7 @@ void dps310_read_pressure(void)
         // read out new temp_raw
         i2c_readdata(DPS310_I2C_ADDRESS, DPS310_TMP, data, 3);
         temp_raw = ((data[0]<<16 | data[1]<<8 | data[2])<<8)>>8;
-        double temp_raw_sc_new  = (double) temp_raw / 524288.0;
-//         lpfd(&temp_raw_sc, temp_raw_sc_new, 0.9921875); // 128*
-        lpfd(&temp_raw_sc, temp_raw_sc_new, 0.984375); // 64*
-//         lpfd(&temp_raw_sc, temp_raw_sc_new, 0.96875); // 32*
-//         lpfd(&temp_raw_sc, temp_raw_sc_new, 0.9375); // 16*
-//         lpfd(&temp_raw_sc, temp_raw_sc_new, 0.875); // 8*
+        temp_raw_sc_new  = (double) temp_raw / TEMP_FACTOR;
 
         // Request new P sample
         i2c_writereg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG, B00000001);
@@ -126,19 +159,17 @@ void dps310_read_pressure(void)
         // read out new press_raw
         i2c_readdata(DPS310_I2C_ADDRESS, DPS310_PSR, data, 3);
         press_raw = ((data[0]<<16 | data[1]<<8 | data[2])<<8)>>8;
-        double press_raw_sc_new =  (double) press_raw / 524288.0;
-//         lpfd(&press_raw_sc, press_raw_sc_new, 0.9921875); // 128*
-//         lpfd(&press_raw_sc, press_raw_sc_new, 0.984375); // 64*
-        lpfd(&press_raw_sc, press_raw_sc_new, 0.96375); // 32*
-//         lpfd(&press_raw_sc, press_raw_sc_new, 0.9375); // 16*
-//         lpfd(&press_raw_sc, press_raw_sc_new, 0.875); // 8*
-
-//         lpfd(&press_raw_sc, press_raw_sc_new, lpfcalc(looptime, 1.0f));
+        press_raw_sc_new =  (double) press_raw / PRESS_FACTOR;
 
         // Request new T sample
         i2c_writereg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG, B00000010);
-
     }
+
+    // Low-pass filter (ease in) raw values, even if we don't have new measurement within looptime
+//     lpfd(&temp_raw_sc, temp_raw_sc_new, TEMP_LPF);
+    temp_raw_sc = temp_raw_sc_new;
+//     lpfd(&press_raw_sc, press_raw_sc_new, PRESS_LPF);
+    press_raw_sc = press_raw_sc_new;
 }
 
 void dps310_prime(void)
@@ -155,7 +186,7 @@ void dps310_prime(void)
     // read out new temp_raw
     i2c_readdata(DPS310_I2C_ADDRESS, DPS310_TMP, data, 3);
     int32_t temp_raw = ((data[0]<<16 | data[1]<<8 | data[2])<<8)>>8;
-    temp_raw_sc = (double) temp_raw / 524288.0;
+    temp_raw_sc = (double) temp_raw / TEMP_FACTOR;
 
     // Request new P sample
     i2c_writereg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG, B00000001); // New P sample
@@ -167,7 +198,7 @@ void dps310_prime(void)
     // read out new press_raw
     i2c_readdata(DPS310_I2C_ADDRESS, DPS310_PSR, data, 3);
     int32_t press_raw = ((data[0]<<16 | data[1]<<8 | data[2])<<8)>>8;
-    press_raw_sc = (double) press_raw / 524288.0;
+    press_raw_sc = (double) press_raw / PRESS_FACTOR;
 
     // Request next T sample
     i2c_writereg(DPS310_I2C_ADDRESS, DPS310_MEAS_CFG, B00000010); // New T sample
