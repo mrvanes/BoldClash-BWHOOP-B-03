@@ -256,7 +256,7 @@ float rate_multiplier = 1.0;
 
     if (aux[LEVELMODE] && rxmode == RXMODE_NORMAL)
     {
-        int rx_good = (rx_good || !(rx[0]==0 && rx[1]==0 && rx[2]==0 && rx[3]==0));
+        rx_good = (rx_good || !(rx[0]==0 && rx[1]==0 && rx[2]==0 && rx[3]==0));
         if (rx_good)
         {
             throttle = altitude_hold();
