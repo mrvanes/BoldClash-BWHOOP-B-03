@@ -448,6 +448,11 @@
           </GroupOption>
           <Files>
             <File>
+              <FileName>altitude.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\altitude.c</FilePath>
+            </File>
+            <File>
               <FileName>control.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\control.c</FilePath>
@@ -587,6 +592,11 @@
               <FileType>5</FileType>
               <FilePath>.\src\debug.h</FilePath>
             </File>
+            <File>
+              <FileName>barometer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\barometer.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -686,6 +696,11 @@
               <FileName>drv_rgb.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\drv_rgb.c</FilePath>
+            </File>
+            <File>
+              <FileName>drv_dps310.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\drv_dps310.c</FilePath>
             </File>
           </Files>
         </Group>
