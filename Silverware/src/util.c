@@ -32,12 +32,6 @@ void constrain(float *out, float min, float max)
     else if (*out > max) *out = max;
 }
 
-void constraind(double *out, double min, double max)
-{
-    if (*out < min) *out = min;
-    else if (*out > max) *out = max;
-}
-
 // calculates the coefficient for lpf filter, times in the same units
 float lpfcalc(float sampleperiod, float filtertime)
 {
@@ -73,16 +67,6 @@ void lpf( float *out, float in , float coeff)
 void hpf( float *out, float delta_in, float coeff)
 {
     *out = ( *out + delta_in ) * coeff;
-}
-
-void hpfd( double *out, double delta_in, double coeff)
-{
-    *out = ( *out + delta_in ) * coeff;
-}
-
-void lpfd( double *out, double in , double coeff)
-{
-    *out = ( *out ) * coeff + in * ( 1 - coeff );
 }
 
 void limitf ( float *input , const float limit)

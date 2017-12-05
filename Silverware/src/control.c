@@ -253,6 +253,7 @@ float rate_multiplier = 1.0;
     extern int rxmode;
     int rx_good = 0;
     extern float altitude, alt_target;
+    int baro_enabled = 1;
 
     if (aux[LEVELMODE] && rxmode == RXMODE_NORMAL)
     {

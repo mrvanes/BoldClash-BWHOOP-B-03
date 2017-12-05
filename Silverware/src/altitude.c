@@ -30,7 +30,7 @@ THE SOFTWARE.
 #include "drv_time.h"
 #include <math.h>
 
-#define AH_REFRESH_FREQ        50.0f
+#define AH_REFRESH_FREQ      1000.0f
 
 #define HOVER_THROTTLE_MIN      0.2f
 #define HOVER_THROTTLE_MAX      1.0f
@@ -38,12 +38,19 @@ THE SOFTWARE.
 // Define maximum target distance for full throttle in m
 #define FULL_THROTTLE_ALT_TARGET  0.2f
 
+// Define minimum low_throttle_time before motors off
+#define LOW_THROTTLE_TIMEOUT    1.0f
+
+#define KP 80.0f
+#define KI 80.1f
+#define KD 00.0f
+
 #define ALT_P 0.1f
 #define ALT_I 0.1f
 #define ALT_D 0.06f
 
-// extern float looptime;
-extern double press_fl;
+extern float looptime;
+extern float press_fl;
 
 extern float rx[4];
 
@@ -66,10 +73,14 @@ void altitude_cal(void)
         }
     altitude_read();
     alt_target = altitude; // Start with target at resting position
+
 }
 
 float altitude_hold(void)
 {
+    static float low_throttle_time = 0;
+    static int grounded = 1;
+
     static float last_alt_e, alt_i;     // PID loop memory
     static float new_ah_throttle, ah_throttle = HOVER_THROTTLE_MIN;
     static float last_dt, last_ah_time;
@@ -79,6 +90,13 @@ float altitude_hold(void)
 
     float ah_time = gettime();
     float dt = (ah_time - last_ah_time) * 1e-6; // dt in seconds
+
+    // Silverxxx AH controller
+    float out = 0;
+    static float alt_lpf;
+    static float last_altitude;
+    static float ierror = 0;
+    static float lastspeed;
 
     if (dt > 1.0/AH_REFRESH_FREQ) {
 
@@ -97,23 +115,76 @@ float altitude_hold(void)
 //             alt_target = new_alt_target;
         }
 
-        // ALT PID
-        alt_e = alt_target - altitude;
-        constrain(&alt_e, -1.0 * FULL_THROTTLE_ALT_TARGET, FULL_THROTTLE_ALT_TARGET);  // Apply FULL_THROTTLE_ALT_TARGET leash
 
-        alt_i += alt_e * dt;
-        constrain(&alt_i, -1.0, 1.0);
+        // Onground
+        if (grounded)
+        {
+            if (newrx > 0.1f)
+            {
+//                 alt_target = altitude;
+                grounded = 0;
+            }
+        } else
+        {
+            if (newrx < -0.9f)
+            {
+                if ((ah_time - low_throttle_time) * 1e-6 > LOW_THROTTLE_TIMEOUT) grounded = 1;
 
-        alt_d = (alt_e - last_alt_e) / dt;
+            } else
+            {
+                low_throttle_time = ah_time;
+            }
+        }
 
-        alt_corr = ALT_P * alt_e + ALT_I * alt_i + ALT_D * alt_d;
+        lpf(&alt_lpf, altitude, FILTERCALC(dt, 0.02f));
 
-        new_ah_throttle = ah_throttle + alt_corr;
-        constrain(&new_ah_throttle, HOVER_THROTTLE_MIN, HOVER_THROTTLE_MAX);
+        if (!grounded)
+        {
+/*
+            // Altitude PID by MrVanes
+            alt_e = alt_target - altitude;
+            constrain(&alt_e, -1.0 * FULL_THROTTLE_ALT_TARGET, FULL_THROTTLE_ALT_TARGET);  // Apply FULL_THROTTLE_ALT_TARGET leash
+            last_alt_e = alt_e;
 
-        last_alt_e = alt_e;
-        ah_throttle = new_ah_throttle;
+            alt_i += alt_e * dt;
+            constrain(&alt_i, -0.5, 0.5);
+
+            alt_d = (alt_e - last_alt_e) / dt;
+
+            alt_corr = ALT_P * alt_e + ALT_I * alt_i + ALT_D * alt_d;
+
+            new_ah_throttle = ah_throttle + alt_corr;
+            constrain(&new_ah_throttle, HOVER_THROTTLE_MIN, HOVER_THROTTLE_MAX);
+
+            ah_throttle = new_ah_throttle;
+*/
+
+            // Velocity PI by Silverxxx
+            float desired_speed = newrx * 0.005f;
+            float speed = alt_lpf - last_altitude;
+            float error = desired_speed - speed;
+
+            ierror += KI * dt * error;
+            limitf (&ierror, 0.5);
+
+            out = error * KP;
+            out += ierror;
+            out += KD * (lastspeed - speed );
+            out += HOVER_THROTTLE_MIN;
+
+            lastspeed = speed;
+
+            constrain(&out, 0, 1);
+            lpf ( &ah_throttle, out, FILTERCALC(dt, 0.2f));
+
+        } else
+        {
+            ah_throttle = 0;
+        }
+
+        last_altitude = alt_lpf;
     }
+
 
     return ah_throttle;
 }
