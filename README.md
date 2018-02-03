@@ -1,8 +1,8 @@
 [![Build Status](https://travis-ci.org/silver13/BoldClash-BWHOOP-B-03.svg?branch=master)](https://travis-ci.org/silver13/BoldClash-BWHOOP-B-03)
 
 ## SilverWare - BoldClash BWHOOP B-03 Barometer version (DEPRECATED)
-
 This repository is deprecated, it is now a branch on the upstream project: https://github.com/silver13/BoldClash-BWHOOP-B-03/
+
 _This is a fork that tries to implement Altitude Hold using the barometer of the (non-pro) B-03_
 
 Currently does not account for centered throttle! ( no altitude hold ) It uses normal throttle, low = motors off. That means it should be used with Devo / multimodule or another tx.
